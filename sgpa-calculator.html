@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGPA Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        p.description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 25px 0;
+        }
+
+        .course-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .course-label {
+            min-width: 100px;
+            font-weight: 500;
+        }
+
+        input, select {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4ca5ff;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4ca5ff 0%, #1a88ff 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 136, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5253 100%);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        #addCourse {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #addCourse span {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .delete-btn {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .course-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .course-label {
+                margin-bottom: 5px;
+            }
+            
+            .delete-btn {
+                align-self: flex-end;
+                margin-top: -30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>SGPA Calculator</h1>
+        <p class="description">Calculate your SGPA based on credits and expected grade.</p>
+        
+        <div class="divider"></div>
+        
+        <div id="courseContainer">
+            <!-- Course rows will be added here -->
+        </div>
+        
+        <button id="addCourse" class="btn">
+            <span>+</span> Add Subject
+        </button>
+        
+        <div class="btn-row">
+            <button id="calculate" class="btn">Calculate</button>
+        </div>
+        
+        <div id="result" class="result">
+            Your SGPA is <span id="sgpaValue">0.0000</span>
+        </div>
+    </div>
+
+    <script>
+        // Grade points mapping
+        const gradePoints = {
+            'O': 10,
+            'A+': 9,
+            'A': 8,
+            'B+': 7,
+            'B': 6,
+            'C': 5,
+            'P': 4,
+            'F': 0
+        };
+
+        let courseCount = 0;
+
+        // Add a new course row
+        function addCourse() {
+            courseCount++;
+            
+            const courseRow = document.createElement('div');
+            courseRow.className = 'course-row';
+            courseRow.id = `course-${courseCount}`;
+            
+            courseRow.innerHTML = `
+                <div class="course-label">Subject ${courseCount}</div>
+                <input type="number" placeholder="Credits" class="credit-input" min="1" max="10">
+                <select class="grade-input">
+                    <option value="O">O</option>
+                    <option value="A+">A+</option>
+                    <option value="A" selected>A</option>
+                    <option value="B+">B+</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="P">P</option>
+                    <option value="F">F</option>
+                </select>
+                <button class="delete-btn" onclick="deleteCourse(${courseCount})">×</button>
+            `;
+            
+            document.getElementById('courseContainer').appendChild(courseRow);
+        }
+
+        // Delete a course row
+        function deleteCourse(id) {
+            const courseElement = document.getElementById(`course-${id}`);
+            if (courseElement) {
+                courseElement.remove();
+            }
+            
+            // If all courses are deleted, hide the result
+            const courses = document.querySelectorAll('.course-row');
+            if (courses.length === 0) {
+                document.getElementById('result').classList.remove('show');
+            }
+        }
+
+        // Calculate SGPA
+        function calculateSGPA() {
+            const courses = document.querySelectorAll('.course-row');
+            let totalCredits = 0;
+            let totalPoints = 0;
+            
+            let validInput = true;
+            
+            courses.forEach(course => {
+                const creditInput = course.querySelector('.credit-input');
+                const gradeInput = course.querySelector('.grade-input');
+                
+                const credit = parseFloat(creditInput.value);
+                const grade = gradeInput.value;
+                
+                if (isNaN(credit) || credit <= 0) {
+                    validInput = false;
+                    creditInput.style.borderColor = '#ff6b6b';
+                } else {
+                    creditInput.style.borderColor = '#ddd';
+                    totalCredits += credit;
+                    totalPoints += credit * gradePoints[grade];
+                }
+            });
+            
+            if (!validInput) {
+                alert('Please enter valid credits for all subjects.');
+                return;
+            }
+            
+            if (totalCredits === 0) {
+                alert('Please add at least one subject with credits.');
+                return;
+            }
+            
+            const sgpa = totalPoints / totalCredits;
+            document.getElementById('sgpaValue').textContent = sgpa.toFixed(4);
+            document.getElementById('result').classList.add('show');
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add first course row
+            addCourse();
+            
+            // Add course button
+            document.getElementById('addCourse').addEventListener('click', addCourse);
+            
+            // Calculate button
+            document.getElementById('calculate').addEventListener('click', calculateSGPA);
+        });
+    </script>
+</body>
+</html>
